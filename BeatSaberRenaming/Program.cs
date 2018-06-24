@@ -8,10 +8,24 @@ namespace BeatSaberRenaming {
 	class Program {
 		private static FileInfo[] json;
 		private static ManualResetEventSlim evnt = new ManualResetEventSlim();
+		private static bool swapAuthorMeaning = false;
 
 		static void Main(string[] args) {
 
+			Console.WriteLine("This is a simple program to ease song/folder renaming");
+			Console.WriteLine("Place this into ../CustomSongs/");
+			Console.WriteLine();
 
+			Console.WriteLine("This program assumes that \"authorName\" is the name of the composer, and \"songSubName\" is the map creator");
+			Console.WriteLine("Use this behaviour? typing 'n' swaps the definition");
+
+			if(Console.ReadLine() == "n") {
+				swapAuthorMeaning = true;
+				Console.WriteLine("Swapped!");
+			}
+			else {
+				Console.WriteLine("Using default");
+			}
 
 			json = new DirectoryInfo(Directory.GetCurrentDirectory()).GetFiles("info.json", SearchOption.AllDirectories);
 			Console.WriteLine("Edit 'info.json' files?\ny/n");
@@ -52,8 +66,15 @@ namespace BeatSaberRenaming {
 						Process.Start(info);
 						Environment.Exit(0);
 					}
+					string combined;
 
-					string combined = authM.Groups[1].Value + " - " + songM.Groups[1].Value + " (by " + chartM.Groups[1].Value + ")";
+					if (!swapAuthorMeaning) {
+						combined = authM.Groups[1].Value + " - " + songM.Groups[1].Value + " (by " + chartM.Groups[1].Value + ")";
+					}
+					else {
+						combined = chartM.Groups[1].Value + " - " + songM.Groups[1].Value + " (by " + authM.Groups[1].Value + ")";
+					}
+
 					string source = json[i].DirectoryName;
 					string dest = json[i].Directory.Parent.FullName + Path.DirectorySeparatorChar + combined;
 
