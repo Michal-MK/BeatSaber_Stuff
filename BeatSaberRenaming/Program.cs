@@ -11,6 +11,8 @@ namespace BeatSaberRenaming {
 
 		static void Main(string[] args) {
 
+
+
 			json = new DirectoryInfo(Directory.GetCurrentDirectory()).GetFiles("info.json", SearchOption.AllDirectories);
 			Console.WriteLine("Edit 'info.json' files?\ny/n");
 			if (Console.ReadLine() == "y") {
@@ -44,8 +46,10 @@ namespace BeatSaberRenaming {
 
 					if(!(passOne && passTwo & passThree)) {
 						Console.WriteLine("\nExecution stopped, edit the invalid file and restart.");
-						Console.WriteLine("Press Enter to exit...");
+						Console.WriteLine("Press Enter to exit and open the corrupt file...");
 						Console.ReadLine();
+						ProcessStartInfo info = new ProcessStartInfo(json[i].FullName);
+						Process.Start(info);
 						Environment.Exit(0);
 					}
 
@@ -56,11 +60,11 @@ namespace BeatSaberRenaming {
 					if (source == dest) {
 						continue;
 					}
-
+					Console.WriteLine("Name '" + combined + "' validated successfully.");
 					Directory.Move(source, dest);
-					Console.WriteLine(combined);
 				}
 			}
+			Console.WriteLine("All done, press Enter to exit...");
 			Console.ReadLine();
 		}
 
@@ -70,13 +74,17 @@ namespace BeatSaberRenaming {
 
 			foreach (char c in invalidPath) {
 				if (text.Contains(c.ToString())) {
-					Console.WriteLine("While processing '" + text + "' I found '" + c + " which is not a valid Path character");
+					Console.WriteLine("!!!!!!!!!!!");
+					Console.WriteLine("While processing '" + text + "' I found '" + c + "' which is not a valid Path character");
+					Console.WriteLine("!!!!!!!!!!!");
 					return false;
 				}
 			}
 			foreach (char c in invalidName) {
 				if (text.Contains(c.ToString())) {
-					Console.WriteLine("While processing '" + text + "' I found '" + c + " which is not a valid FileName character");
+					Console.WriteLine("!!!!!!!!!!!");
+					Console.WriteLine("While processing '" + text + "' I found '" + c + "' which is not a valid FileName character");
+					Console.WriteLine("!!!!!!!!!!!");
 					return false;
 				}
 			}
@@ -84,7 +92,7 @@ namespace BeatSaberRenaming {
 		}
 
 		private static void Open(int i) {
-			ProcessStartInfo info = new ProcessStartInfo(@"D:\Notepad++\notepad++.exe", json[i].FullName);
+			ProcessStartInfo info = new ProcessStartInfo(json[i].FullName);
 			Process p = Process.Start(info);
 			p.EnableRaisingEvents = true;
 			p.Exited += P_Exited;
