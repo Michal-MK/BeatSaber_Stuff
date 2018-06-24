@@ -12,7 +12,7 @@ namespace BeatSaberRenaming {
 		static void Main(string[] args) {
 
 			json = new DirectoryInfo(Directory.GetCurrentDirectory()).GetFiles("info.json", SearchOption.AllDirectories);
-			Console.WriteLine("Edit Info files?\ny/n");
+			Console.WriteLine("Edit 'info.json' files?\ny/n");
 			if (Console.ReadLine() == "y") {
 
 				for (int i = 0; i < json.Length; i++) {
@@ -38,9 +38,16 @@ namespace BeatSaberRenaming {
 					Match songM = name.Match(text);
 					Match chartM = chart.Match(text);
 
-					Validate(authM.Groups[1].Value);
-					Validate(songM.Groups[1].Value);
-					Validate(chartM.Groups[1].Value);
+					bool passOne = Validate(authM.Groups[1].Value);
+					bool passTwo = Validate(songM.Groups[1].Value);
+					bool passThree = Validate(chartM.Groups[1].Value);
+
+					if(!(passOne && passTwo & passThree)) {
+						Console.WriteLine("\nExecution stopped, edit the invalid file and restart.");
+						Console.WriteLine("Press Enter to exit...");
+						Console.ReadLine();
+						Environment.Exit(0);
+					}
 
 					string combined = authM.Groups[1].Value + " - " + songM.Groups[1].Value + " (by " + chartM.Groups[1].Value + ")";
 					string source = json[i].DirectoryName;
@@ -57,8 +64,23 @@ namespace BeatSaberRenaming {
 			Console.ReadLine();
 		}
 
-		private static Validate() {
+		private static bool Validate(string text) {
+			char[] invalidPath = Path.GetInvalidPathChars();
+			char[] invalidName = Path.GetInvalidFileNameChars();
 
+			foreach (char c in invalidPath) {
+				if (text.Contains(c.ToString())) {
+					Console.WriteLine("While processing '" + text + "' I found '" + c + " which is not a valid Path character");
+					return false;
+				}
+			}
+			foreach (char c in invalidName) {
+				if (text.Contains(c.ToString())) {
+					Console.WriteLine("While processing '" + text + "' I found '" + c + " which is not a valid FileName character");
+					return false;
+				}
+			}
+			return true;
 		}
 
 		private static void Open(int i) {
@@ -71,7 +93,6 @@ namespace BeatSaberRenaming {
 		private static void P_Exited(object sender, EventArgs e) {
 			evnt.Set();
 		}
-
 	}
 }
 
