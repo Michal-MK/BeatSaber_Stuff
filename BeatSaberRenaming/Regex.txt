@@ -1,3 +1,19 @@
-﻿"songName": "7th Element",
-"songSubName": "Azure",
-"authorName": "Vitas",
+﻿{
+	"songName": "Boundless",
+	"songSubName": "M.Rappold",
+	"authorName": "Aero Chord",
+	"beatsPerMinute": 170,
+	"previewStartTime": 45.869998931884766,
+	"previewDuration": 16.941177368164063,
+	"coverImagePath": "cover.png",
+	"environmentName": "DefaultEnvironment",
+	"difficultyLevels": [{
+			"difficulty": "ExpertPlus",
+			"difficultyRank": 10,
+			"audioPath": "Boundless.ogg",
+			"jsonPath": "ExpertPlus.json",
+			"offset": 0,
+			"oldOffset": 0
+		}
+	]
+}
