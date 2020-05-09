@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.IO.Compression;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace BeatSaberRenaming {
 	class Program {
@@ -16,7 +17,7 @@ namespace BeatSaberRenaming {
 
 		private static Settings Current;
 
-		static void Main() {
+		static void Main(string[] args) {
 			bool newGeneration = !SettingsManager.Initialize();
 			if (newGeneration) {
 				Console.WriteLine("Settings were generated, edit them and launch again");
@@ -46,7 +47,7 @@ namespace BeatSaberRenaming {
 					ZipFile.ExtractToDirectory(zip.FullName, dirPath);
 				}
 				catch (Exception e) {
-					if(e.Message.Contains("already exists")) {
+					if (e.Message.Contains("already exists")) {
 						Console.WriteLine(e.Message);
 					}
 					throw e;
@@ -72,6 +73,7 @@ namespace BeatSaberRenaming {
 
 			foreach (string dir in directories) {
 				DirectoryInfo info = new DirectoryInfo(dir);
+
 				FileInfo[] nf = info.GetFiles("info.dat");
 				if (nf.Length == 0) {
 					return;
@@ -90,40 +92,78 @@ namespace BeatSaberRenaming {
 				string levelMaker = jsonObject[LEVEL_AUTHOR].Value<string>();
 
 				if (Validate(name) && Validate(composer) && Validate(levelMaker)) {
-					if (Current.CopyAfterConversion && Current.DeleteExtractedAndRenamed) {
-						try {
-							info.MoveTo(Path.Combine(Current.CustomSongsFolder, $"{composer} - {name} (by {levelMaker})"));
-						}
-						catch (Exception e) {
-							Console.WriteLine(e.Message);
-							Directory.Delete(dir, true);
-						}
-					}
-					else if (Current.CopyAfterConversion) {
-						try {
-							info.MoveTo(Path.Combine(info.Parent.FullName, $"{composer} - {name} (by {levelMaker})"));
-							CopyFolder(info, Current.CustomSongsFolder);
-						}
-						catch (Exception e) {
-							Console.WriteLine(e.Message);
-						}
-					}
-					if (Current.DeleteZips) {
-						foreach (FileInfo infos in info.GetFiles("*.zip")) {
-							infos.Delete();
-						}
-					}
+					Process(name, composer, levelMaker, info);
 				}
 				else {
-					Console.BackgroundColor = ConsoleColor.Red;
-					Console.WriteLine($"Invalid! -> {name} - {composer} ({levelMaker})");
+					string replaced = ReplaceInvalid($"{composer} - {name} (by {levelMaker})");
+					Process(replaced, info);
 				}
-
 				Console.WriteLine($"{name} - {composer} Processed!");
 			}
 
 			Console.WriteLine("Done");
 			Console.ReadLine();
+		}
+
+		private static string ReplaceInvalid(string curr) {
+			StringBuilder sb = new StringBuilder();
+			List<char> invalidName = new List<char>(Path.GetInvalidFileNameChars());
+			foreach (char c in curr) {
+				if (invalidName.Contains(c)) {
+					Console.BackgroundColor = ConsoleColor.Red;
+					Console.WriteLine($"Replace '{c}':");
+					Console.BackgroundColor = ConsoleColor.Black;
+					bool suitableReplacement = false;
+					while (!suitableReplacement) {
+						Console.Write("$ ");
+
+						string s = Console.ReadLine();
+						if (s.Length > 1) { Console.WriteLine("One character only!"); }
+						if (s.Length == 0) { Console.WriteLine($"Removed '{c}'"); break; }
+						char replacement = s[0];
+						if (invalidName.Contains(replacement)) { Console.WriteLine($"{replacement} is also invalid!"); }
+						sb.Append(replacement);
+						suitableReplacement = true;
+					}
+				}
+				else {
+					sb.Append(c);
+				}
+			}
+			return sb.ToString();
+		}
+
+		public static void Process(string name, string composer, string levelMaker, DirectoryInfo info) {
+			Process($"{composer} - {name} (by {levelMaker})", info);
+		}
+
+		private static void Process(string fullName, DirectoryInfo info) {
+			if (Current.CopyAfterConversion && Current.DeleteExtractedAndRenamed) {
+				try {
+					info.MoveTo(Path.Combine(Current.CustomSongsFolder, fullName));
+				}
+				catch (Exception e) {
+					Console.WriteLine(e.Message);
+					info.Delete(true);
+				}
+			}
+			else if (Current.CopyAfterConversion) {
+				try {
+					info.MoveTo(Path.Combine(info.Parent.FullName, fullName));
+					CopyFolder(info, Current.CustomSongsFolder);
+				}
+				catch (Exception e) {
+					Console.WriteLine(e.Message);
+				}
+			}
+			else if (Current.DeleteZips) {
+				foreach (FileInfo infos in info.GetFiles("*.zip")) {
+					infos.Delete();
+				}
+			}
+			else {
+				info.MoveTo(Path.Combine(info.Parent.FullName, fullName));
+			}
 		}
 
 		private static void CopyFolder(DirectoryInfo from, string to) {
@@ -140,7 +180,7 @@ namespace BeatSaberRenaming {
 				if (text.Contains(c.ToString())) {
 					Console.BackgroundColor = ConsoleColor.Red;
 					Console.WriteLine("!!!!!!!!!!!");
-					Console.WriteLine("While processing '" + text + "' I found '" + c + "' which is not a valid FileName character");
+					Console.WriteLine("While processing '" + text + "' I found '" + c + "' which is not a valid file name character");
 					Console.WriteLine("!!!!!!!!!!!");
 					Console.BackgroundColor = ConsoleColor.Black;
 					return false;
